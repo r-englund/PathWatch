@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <tchar.h>
 
-#include <iostream>
-
 namespace filewatch {
 
 std::shared_ptr<FileWatcherManager> FileWatcherManager::getManager() {
@@ -17,10 +15,9 @@ std::shared_ptr<FileWatcherManager> FileWatcherManager::getManager() {
 }
 
 FileWatcherWin::FileWatcherWin(std::string path)
-    : FileWatcher(std::regex_replace(path, std::regex("\\\\"), "/")) 
+    : FileWatcher(std::regex_replace(path, std::regex("\\\\"), "/"))
     , hFile_(nullptr)
-    , lastWriteTime()
-{
+    , lastWriteTime() {
     hFile_ = CreateFile(filepath_.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, 0, NULL);
 
@@ -32,7 +29,8 @@ FileWatcherWin::FileWatcherWin(std::string path)
 FileWatcherWin::~FileWatcherWin() { CloseHandle(hFile_); }
 
 FileWatcherManagerWin::FileWatcherManagerWin()
-    : newWatchEven_(CreateEvent(NULL, FALSE, FALSE, "New file to watch"))
+    : newWatchEven_(CreateEvent(NULL, FALSE, FALSE, "Start to watch file"))
+    , removeWatchEvent_(CreateEvent(NULL, FALSE, FALSE, "Stop to watch file"))
     , thread_([=]() { mainLoop(); }) {}
 
 std::shared_ptr<FileWatcher> FileWatcherManagerWin::watchFile(std::string filepath) {
@@ -71,18 +69,34 @@ std::shared_ptr<FileWatcher> FileWatcherManagerWin::watchFile(std::string filepa
 }
 
 void FileWatcherManagerWin::mainLoop() {
-    std::vector<HANDLE> handles{newWatchEven_};
+    std::vector<HANDLE> handles{newWatchEven_, removeWatchEvent_};
     while (true) {
+
         DWORD dwWaitStatus = WaitForMultipleObjects(static_cast<DWORD>(handles.size()),
                                                     handles.data(), FALSE, INFINITE);
 
-        if (dwWaitStatus == WAIT_OBJECT_0) {
+        auto id = dwWaitStatus - WAIT_OBJECT_0;
+        if (id == 0) {
             std::lock_guard<std::mutex> lock(mutex_);
             handles.insert(handles.end(), newHandles_.begin(), newHandles_.end());
             newHandles_.clear();
-        } else if (dwWaitStatus > WAIT_OBJECT_0 &&
-                   dwWaitStatus <= WAIT_OBJECT_0 + handles.size() - 1) {
-            auto handle = handles[dwWaitStatus - WAIT_OBJECT_0];
+        }
+        if (id == 1) {
+            auto removeIF = [&](HANDLE h) {
+                auto it = fileWatchers_.find(h);
+                if (it == fileWatchers_.end()) return true;
+                if (it->second.expired()) {
+                    fileWatchers_.erase(it);
+                    return true;
+                }
+                return false;
+            };
+
+            handles.erase(std::remove_if(handles.begin() + 1, handles.end(), removeIF),
+                          handles.end());
+
+        } else if (id > 1 && id < handles.size()) {
+            auto handle = handles[id];
             auto fw = fileWatchers_[handle].lock();
             if (fw) {
                 FILETIME creationTime;
@@ -91,7 +105,6 @@ void FileWatcherManagerWin::mainLoop() {
                 GetFileTime(fw->hFile_, &creationTime, &lpLastAccessTime, &lastWriteTime);
 
                 if (CompareFileTime(&fw->lastWriteTime, &lastWriteTime) < 0) {
-                    std::cout << fw->lastWriteTime.dwLowDateTime << " " << lastWriteTime.dwLowDateTime << " " << (fw->lastWriteTime.dwLowDateTime - lastWriteTime.dwLowDateTime) << std::endl;
                     fw->lastWriteTime = lastWriteTime;
                     fw->invokeAll();
                 }
@@ -100,7 +113,7 @@ void FileWatcherManagerWin::mainLoop() {
                     throw std::exception("FindNextChangeNotification function failed.");
                 }
             } else {
-                // std::cout << "dead" << std::endl;
+                handles.erase(handles.begin() + id);
             }
 
         } else {
@@ -109,5 +122,7 @@ void FileWatcherManagerWin::mainLoop() {
         }
     }
 }
+
+void FileWatcherManagerWin::signalRemoved() { SetEvent(removeWatchEvent_); }
 
 }  // namespace

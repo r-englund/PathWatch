@@ -36,10 +36,12 @@ public:
 
     virtual std::shared_ptr<FileWatcher> watchFile(std::string file) override;
 
+private:
     void mainLoop();
+    void signalRemoved();
 
-
-    HANDLE newWatchEven_;
+    HANDLE newWatchEvent_;
+    HANDLE removeWatchEvent_;
     std::vector<HANDLE> newHandles_;
     std::map<HANDLE, std::weak_ptr<FileWatcherWin>> fileWatchers_;
 
@@ -48,6 +50,7 @@ public:
 
 
     std::thread thread_;
+    friend class FileWatcherManagerWin;
 };
 
 
