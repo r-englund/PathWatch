@@ -32,6 +32,8 @@ class FW_API FileWatcherManager {
 public:
     virtual ~FileWatcherManager() {}
     virtual std::shared_ptr<FileWatcher> watchFile(std::string file) = 0;
+    std::shared_ptr<FileWatcher> watchFile(std::string file, FileWatcher::F callback);
+
     static std::shared_ptr<FileWatcherManager> getManager();
 
 

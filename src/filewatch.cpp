@@ -16,4 +16,11 @@ void FileWatcher::invokeAll() {
     std::for_each(callbacks_.begin(), callbacks_.end(), [](auto c) { c(); });
 }
 
+std::shared_ptr<FileWatcher> FileWatcherManager::watchFile(std::string file,
+                                                           FileWatcher::F callback) {
+    auto vf = watchFile(file);
+    vf->onChange(callback);
+    return vf;
+}
+
 }  // namespace
