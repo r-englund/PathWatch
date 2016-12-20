@@ -29,7 +29,7 @@ FileWatcherWin::FileWatcherWin(std::string path)
 FileWatcherWin::~FileWatcherWin() { CloseHandle(hFile_); }
 
 FileWatcherManagerWin::FileWatcherManagerWin()
-    : newWatchEven_(CreateEvent(NULL, FALSE, FALSE, "Start to watch file"))
+    : newWatchEvent_(CreateEvent(NULL, FALSE, FALSE, "Start to watch file"))
     , removeWatchEvent_(CreateEvent(NULL, FALSE, FALSE, "Stop to watch file"))
     , thread_([=]() { mainLoop(); }) {}
 
@@ -63,13 +63,13 @@ std::shared_ptr<FileWatcher> FileWatcherManagerWin::watchFile(std::string filepa
         newHandles_.push_back(dwChangeHandles);
     }
 
-    SetEvent(newWatchEven_);
+    SetEvent(newWatchEvent_);
 
     return fw;
 }
 
 void FileWatcherManagerWin::mainLoop() {
-    std::vector<HANDLE> handles{newWatchEven_, removeWatchEvent_};
+    std::vector<HANDLE> handles{newWatchEvent_, removeWatchEvent_};
     while (true) {
 
         DWORD dwWaitStatus = WaitForMultipleObjects(static_cast<DWORD>(handles.size()),
@@ -80,8 +80,7 @@ void FileWatcherManagerWin::mainLoop() {
             std::lock_guard<std::mutex> lock(mutex_);
             handles.insert(handles.end(), newHandles_.begin(), newHandles_.end());
             newHandles_.clear();
-        }
-        if (id == 1) {
+        } else if (id == 1) {
             auto removeIF = [&](HANDLE h) {
                 auto it = fileWatchers_.find(h);
                 if (it == fileWatchers_.end()) return true;
