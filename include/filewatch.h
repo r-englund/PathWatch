@@ -1,49 +1,43 @@
 #ifndef FILEWATCH_H
 #define FILEWATCH_H
 
-#ifdef FW_SHARED_BUILD
-    #ifdef FW_EXPORTS
-        #ifdef _WIN32
-            #define FW_API __declspec(dllexport)
-        #else //UNIX (GCC)
-            #define FW_API __attribute__ ((visibility ("default")))
-        #endif
-    #else
-        #ifdef _WIN32
-            #define FW_API __declspec(dllimport)
-        #else
-            #define FW_API 
-    #endif
-#endif
-#else
-    #define FW_API 
-#endif
+#include "fw_api.h"
 
-
+#include <memory>
 #include <string>
+#include <functional>
+#include <vector>
 
 namespace filewatch {
 
+class FW_API FileWatcher {
+public:
+    using F = std::function<void()>;
 
-    class FW_API FileWatcher {
-    public:
+    virtual ~FileWatcher();
+    std::string getFilename();
 
-        FileWatcher(std::string path);
-        virtual ~FileWatcher(){}
+    void onChange(F callback);
 
-    private:
-        std::string filepath_;
+    void invokeAll();
 
-    };
+protected:
+    FileWatcher(std::string path);
+    std::string filepath_;
+
+    std::vector<F> callbacks_;
+};
+
+class FW_API FileWatcherManager {
+public:
+    virtual ~FileWatcherManager() {}
+    virtual std::shared_ptr<FileWatcher> watchFile(std::string file) = 0;
+    static std::shared_ptr<FileWatcherManager> getManager();
 
 
+protected:
+    FileWatcherManager() {}
+};
 
-
-
-
-
-
-
-
-} // namespace
+}  // namespace
 #endif

@@ -10,9 +10,15 @@ int main(int argc , char ** argv) {
 
     std::string file = argv[1];
 
+   
+    auto fileWatcherManager = filewatch::FileWatcherManager::getManager();
+    auto watch = fileWatcherManager->watchFile(file);
     
-    
-    filewatch::FileWatcher fw(file);
+
+    watch->onChange([]() {
+        std::cout << "File changed" << std::endl;
+    });
+   
 
     while (true) {
 
