@@ -1,8 +1,8 @@
-# CMakeLists files in this project can
+# CMakeLists paths in this project can
 # refer to the root source directory of the project as ${HELLO_SOURCE_DIR} and
 # to the root binary directory of the project as ${HELLO_BINARY_DIR}.
 cmake_minimum_required (VERSION 2.8.11)
-project (FileWatch)
+project (PathWatch)
 
 
 
@@ -20,19 +20,19 @@ else()
     set(LINK_TYPE STATIC)
 endif()
 
-add_library(filewatch ${LINK_TYPE} src/filewatch_win.cpp src/filewatch.cpp)
+add_library(pathwatch ${LINK_TYPE} src/pathwatch_win.cpp src/pathwatch.cpp)
 
 
-set_property(TARGET filewatch APPEND_STRING PROPERTY 
+set_property(TARGET pathwatch APPEND_STRING PROPERTY 
     COMPILE_FLAGS "/W4 /D_CRT_SECURE_NO_WARNINGS /wd4005 /wd4996 /nologo /w34189 /w34263 /w34266 /w34289 /w34296 /wd4251")
 
 if(SHARED_LIBS)
-    target_compile_definitions(filewatch PRIVATE -DFW_EXPORTS)
+    target_compile_definitions(pathwatch PRIVATE -DFW_EXPORTS)
 endif()
 
 if(FW_BUILD_EXAMPLE)
     add_executable(example example/example.cpp)
-    target_link_libraries(example filewatch)
+    target_link_libraries(example pathwatch)
 endif()
 
 
