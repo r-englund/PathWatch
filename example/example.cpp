@@ -1,5 +1,5 @@
 #include <iostream>
-#include <filewatch.h>
+#include <pathwatch.h>
 
 int main(int argc , char ** argv) {
     if (argc != 2) {
@@ -11,7 +11,7 @@ int main(int argc , char ** argv) {
     std::string file = argv[1];
 
    
-    auto fileWatcherManager = filewatch::FileWatcherManager::getManager();
+    auto fileWatcherManager = pathwatch::FileWatcherManager::getManager();
     auto watch = fileWatcherManager->watchFile(file);
     
 

@@ -3,43 +3,33 @@
 
 #include "fw_api.h"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <functional>
 #include <vector>
 
-namespace filewatch {
+namespace pathwatch {
+namespace fs = std::filesystem;
 
-class FW_API FileWatcher {
+class Exception : public std::exception {
 public:
-    using F = std::function<void()>;
-
-    virtual ~FileWatcher();
-    std::string getFilename();
-
-    void onChange(F callback);
-
-    void invokeAll();
-
-protected:
-    FileWatcher(std::string path);
-    std::string filepath_;
-
-    std::vector<F> callbacks_;
+    Exception(std::string msg) : std::exception(msg.c_str()) {}
 };
 
-class FW_API FileWatcherManager {
+class FW_API PathWatcher {
+
 public:
-    virtual ~FileWatcherManager() {}
-    virtual std::shared_ptr<FileWatcher> watchFile(std::string file) = 0;
-    std::shared_ptr<FileWatcher> watchFile(std::string file, FileWatcher::F callback);
+    class Impl {};
+    using OnChangeCallback = std::function<void()>;
 
-    static std::shared_ptr<FileWatcherManager> getManager();
+    PathWatcher();
+    ~PathWatcher();
 
+    void watch(fs::path path, OnChangeCallback callback);
 
-protected:
-    FileWatcherManager() {}
+    std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace
+}  // namespace pathwatch
 #endif
