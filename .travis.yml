@@ -2,10 +2,10 @@ language: cpp
 
 matrix:
   include:
-#    - os: windows
-#      env: PW_SHARED=ON PW_STATIC=OFF
-#    - os: windows
-#      env: PW_SHARED=OFF PW_STATIC=ON
+    - os: windows
+      env: PW_SHARED=ON PW_STATIC=OFF
+    - os: windows
+      env: PW_SHARED=OFF PW_STATIC=ON
 #    - os: linux
 #      dist: bionic
 #      compiler: clang
@@ -14,7 +14,14 @@ matrix:
       dist: bionic
       compiler: gcc
       env: PW_SHARED=OFF PW_STATIC=ON
-
+    - os: linux
+      dist: bionic
+      compiler: gcc
+      env: PW_SHARED=ON PW_STATIC=OFF
+    - os: osx
+      env: PW_SHARED=ON PW_STATIC=OFF
+    - os: osx
+      env: PW_SHARED=OFF PW_STATIC=ON
 
 before_install:
 - if [ $TRAVIS_OS_NAME == linux   ]; then sudo apt-get install gcc-8 g++-8 ; fi
