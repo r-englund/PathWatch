@@ -1,11 +1,30 @@
 language: cpp
 
-os: windows
+matrix:
+  include:
+#    - os: windows
+#      env: PW_SHARED=ON PW_STATIC=OFF
+#    - os: windows
+#      env: PW_SHARED=OFF PW_STATIC=ON
+#    - os: linux
+#      dist: bionic
+#      compiler: clang
+#      env: PW_SHARED=OFF PW_STATIC=ON
+    - os: linux
+      dist: bionic
+      compiler: gcc
+      env: PW_SHARED=OFF PW_STATIC=ON
 
+
+before_install:
+- if [ $TRAVIS_OS_NAME == linux   ]; then sudo apt-get install gcc-8 g++-8 ; fi
 
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - if [ $TRAVIS_OS_NAME == linux ]; then  export CC=gcc-8  ; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then  export CXX=g++-8  ; fi
+  - cmake .. -DPW_BUILD_EXAMPLES=ON -DPW_INCLUDE_FALLBACK=ON -DPW_BUILD_STATIC=$PW_STATIC -DPW_BUILD_SHARED=$PW_SHARED
 
-script: make
+script: 
+ - cmake --build .

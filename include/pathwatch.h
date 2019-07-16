@@ -1,7 +1,6 @@
-#ifndef FILEWATCH_H
-#define FILEWATCH_H
+#pragma once
 
-#include "fw_api.h"
+#include "pw_api.h"
 
 #include <filesystem>
 #include <memory>
@@ -12,15 +11,15 @@
 namespace pathwatch {
 namespace fs = std::filesystem;
 
-class Exception : public std::exception {
+class Exception : public std::runtime_error {
 public:
-    Exception(std::string msg) : std::exception(msg.c_str()) {}
+    Exception(std::string msg) : std::runtime_error(msg.c_str()) {}
 };
 
-class FW_API PathWatcher {
+class PW_API PathWatcher {
 
 public:
-    class Impl {};
+    class PIMPL {};
     using OnChangeCallback = std::function<void()>;
 
     PathWatcher();
@@ -28,8 +27,7 @@ public:
 
     void watch(fs::path path, OnChangeCallback callback);
 
-    std::unique_ptr<Impl> impl_;
+    std::unique_ptr<PIMPL> impl_;
 };
 
 }  // namespace pathwatch
-#endif

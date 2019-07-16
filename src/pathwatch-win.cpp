@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <array>
 
 #include <windows.h>
 #include <mutex>
@@ -31,7 +32,7 @@ void printError() {
 }
 }  // namespace win
 
-class PathWatcherWinInternals : public PathWatcher::Impl {
+class PathWatcherWinInternals : public PathWatcher::PIMPL {
 public:
     PathWatcherWinInternals()
         : newWatchEvent_(CreateEvent(NULL, FALSE, FALSE, "Start to watch file"))
@@ -127,9 +128,9 @@ public:
                 FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE |
                 FILE_NOTIFY_CHANGE_SECURITY | FILE_NOTIFY_CHANGE_SIZE;
 
-            FILE_NOTIFY_INFORMATION buffer[1024 * 16];
+            std::vector<FILE_NOTIFY_INFORMATION> buffer(1024 * 16);
             DWORD                   bytesReturns;
-            auto res = ReadDirectoryChangesW(handle, &buffer, 1024 * 16, TRUE, FILE_NOTIFY_ALL,
+            auto res = ReadDirectoryChangesW(handle, buffer.data(), 1024 * 16, TRUE, FILE_NOTIFY_ALL,
                                              &bytesReturns, NULL, NULL);
 
             if (res == 0) {
