@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
     std::condition_variable cv;
 
     bool changed = false;
-    pathWatcher.watch(file, [&]() {
-        std::cout << "File changed" << std::endl;
+    pathWatcher.watch(file, [&](auto what) {
+        std::cout << what << std::endl;
         changed = true;
         cv.notify_one();
     });
