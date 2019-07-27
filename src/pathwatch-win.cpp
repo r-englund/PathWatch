@@ -96,7 +96,8 @@ Directory::Directory(fs::path path)
         NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL)), path_(path) {}
 
 void Directory::changeDetected() {
-    std::vector<FILE_NOTIFY_INFORMATION> buffer(1024 * 16);
+    //std::vector<FILE_NOTIFY_INFORMATION> buffer(1024 * 16);
+    std::vector<char> buffer(1024 * 16);
     DWORD bytesReturns;
     auto res = ReadDirectoryChangesW(handle, buffer.data(), 1024 * 16, TRUE, FILE_NOTIFY_ALL,
                                      &bytesReturns, NULL, NULL);
@@ -112,16 +113,16 @@ void Directory::changeDetected() {
     if (res == 0) {
         winutil::printError();
     }
-
+    
 
     else if (bytesReturns != 0) {
         auto off = 0;
         actions::FileRenamed renameAction;
         while (true) {
-
-            std::wstring filename(buffer[off].FileName, buffer[off].FileNameLength / sizeof(WCHAR));
+            auto cur = (FILE_NOTIFY_INFORMATION*)(&buffer[off]);
+            std::wstring filename(cur->FileName, cur->FileNameLength / sizeof(WCHAR));
             fs::path filepath = this->path_ / filename;
-            switch (buffer[off].Action) {
+            switch (cur->Action) {
                 case FILE_ACTION_ADDED:
                     invoke(actions::FileAdded{filepath});
                     break;
@@ -151,14 +152,8 @@ void Directory::changeDetected() {
                 renameAction.newPath.clear();
             }
 
-
-
-
-            if (buffer[off].Action == 3) {
-            }
-
-            if (!buffer[off].NextEntryOffset) break;
-            off = buffer[off].NextEntryOffset;
+            if (!cur->NextEntryOffset) break;
+            off = cur->NextEntryOffset;
         }
     }
     else {

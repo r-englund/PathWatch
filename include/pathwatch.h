@@ -65,7 +65,10 @@ public:
     using Action = std::variant<actions::FileAdded, actions::FileRemoved, actions::FileModified,
                                 actions::FileRenamed>;
 
-    class PIMPL {};
+    class PIMPL {
+    public:
+        virtual ~PIMPL() {}
+    };
 
     PathWatcher();
     ~PathWatcher();
